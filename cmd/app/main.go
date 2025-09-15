@@ -1,9 +1,9 @@
 package main
 
 import (
-	
 	"log"
-    "time"
+	"time"
+
 	"github.com/TrueSmartcomm/backend/config"
 	"github.com/TrueSmartcomm/backend/internal/handler"
 	"github.com/TrueSmartcomm/backend/internal/repository"
@@ -17,12 +17,12 @@ func main() {
 
 	db, err := storage.New(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect DB: %v", err)   
+		log.Fatalf("Failed to connect DB: %v", err)
 	}
 
 	defer db.Close()
 
-	//роутер 
+	//роутер
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger())
 
@@ -42,20 +42,17 @@ func main() {
 	})
 
 	taskRepo := repository.NewTaskRepository(db.DB)
-    taskHandler := handler.NewTaskHandler(taskRepo)
+	taskHandler := handlers.NewTaskHandler(taskRepo)
 
-    r.POST("/tasks", taskHandler.CreateTask)
-    r.GET("/tasks", taskHandler.GetTask)
-    r.PUT("/tasks", taskHandler.UpdateTask)
-    r.DELETE("/tasks", taskHandler.DeleteTask)
-	r.POST("/tasks/move", taskHandler.MoveTask)
+	r.POST("/tasks", taskHandler.CreateTask)
+	r.GET("/tasks", taskHandler.GetTask)
+	r.PUT("/tasks", taskHandler.UpdateTask)
+	r.DELETE("/tasks", taskHandler.DeleteTask)
+	//r.POST("/tasks/move", taskHandler.MoveTask)
 
-
-    //HTTP сервак
+	//HTTP сервак
 	log.Printf("starting http server on :%s...", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatal(err)
 	}
 }
-
-
