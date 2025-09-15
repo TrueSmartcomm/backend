@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	// загрузкамана конфиг
 	cfg := config.MustLoad()
 
 	db, err := storage.New(cfg.DatabaseURL)
@@ -27,7 +26,7 @@ func main() {
 	r.Use(gin.Recovery(), gin.Logger())
 
 	// Healthcheck endpoint
-	r.GET("/healthz", func(ctx *gin.Context) {
+	r.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"status": "ok"})
 	})
 
@@ -44,10 +43,10 @@ func main() {
 	taskRepo := repository.NewTaskRepository(db.DB)
 	taskHandler := handlers.NewTaskHandler(taskRepo)
 
-	r.POST("/tasks", taskHandler.CreateTask)
-	r.GET("/tasks", taskHandler.GetTask)
-	r.PUT("/tasks", taskHandler.UpdateTask)
-	r.DELETE("/tasks", taskHandler.DeleteTask)
+	r.POST("/api/v1/tasks", taskHandler.CreateTask)
+	r.GET("/api/v1/tasks", taskHandler.GetTask)
+	r.PUT("/api/v1/tasks", taskHandler.UpdateTask)
+	r.DELETE("/api/v1/tasks", taskHandler.DeleteTask)
 	//r.POST("/tasks/move", taskHandler.MoveTask)
 
 	//HTTP сервак

@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: Task Management API
+  version: 1.0.0
+  description: API для управления задачами в Kanban-системе
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+components:
+  schemas:
+    Task:
+      type: object
+      description: Задача в Kanban-доске
+      required:
+        - id
+        - title
+        - status
+        - kanban_space
+        - owner
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор задачи
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        title:
+          type: string
+          description: Название задачи
+          example: "Реализовать авторизацию"
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Детальное описание задачи
+          example: "Необходимо реализовать JWT-авторизацию с refresh токенами."
+          nullable: true
+        status:
+          type: string
+          description: Текущий статус задачи
+          enum:
+            - todo
+            - in_progress
+            - done
+            - review
+          example: "in_progress"
+        kanban_space:
+          type: string
+          description: Пространство канбан-доски (аналог статуса, но может быть отдельной доской)
+          enum:
+            - todo
+            - in_progress
+            - done
+            - review
+          example: "in_progress"
+        owner:
+          type: string
+          description: Владелец задачи (создатель)
+          example: "john.doe@example.com"
+          minLength: 1
+        assigned_to:
+          type: string
+          description: Пользователь, на которого назначена задача (опционально)
+          example: "jane.smith@example.com"
+          nullable: true
+        priority:
+          type: string
+          description: Приоритет задачи
+          enum:
+            - low
+            - medium
+            - high
+            - urgent
+          example: "high"
+          nullable: true
+        due_date:
+          type: string
+          format: date-time
+          description: Срок выполнения задачи
+          example: "2025-04-15T10:00:00Z"
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания задачи
+          example: "2025-04-01T08:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления задачи
+          example: "2025-04-10T14:22:00Z"
+
+paths:
+  /api/v1/tasks:
+    get:
+      summary: Получить список задач
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      summary: Создать новую задачу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '201':
+          description: Задача успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Неверный запрос (например, отсутствует required поле)
+
+  /api/v1/tasks/{id}:
+    get:
+      summary: Получить задачу по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Задача не найдена
+
+    put:
+      summary: Обновить задачу полностью
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Задача успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Неверный запрос
+
+    patch:
+      summary: Частичное обновление задачи
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  nullable: true
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  enum:
+                    - todo
+                    - in_progress
+                    - done
+                    - review
+                  nullable: true
+                kanban_space:
+                  type: string
+                  enum:
+                    - todo
+                    - in_progress
+                    - done
+                    - review
+                  nullable: true
+                assigned_to:
+                  type: string
+                  nullable: true
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                    - urgent
+                  nullable: true
+                due_date:
+                  type: string
+                  format: date-time
+                  nullable: true
+              additionalProperties: false
+      responses:
+        '200':
+          description: Задача успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+    delete:
+      summary: Удалить задачу
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Задача успешно удалена
+        '404':
+          description: Задача не найдена

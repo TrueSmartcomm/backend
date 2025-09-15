@@ -8,6 +8,13 @@ services:
       - .env
     ports:
       - "8080:8080"
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: postgres
+      ENV: demo
     depends_on:
       - db
 
