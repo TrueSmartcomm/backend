@@ -10,6 +10,7 @@ import (
 	"github.com/TrueSmartcomm/backend/internal/middleware"
 	"github.com/TrueSmartcomm/backend/internal/repository"
 	"github.com/TrueSmartcomm/backend/internal/storage"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,7 +42,18 @@ func main() {
 
 	// --- Настройка маршрутов ---
 	r := gin.New()
-	r.Use(gin.Recovery(), gin.Logger())
+	corsConfig := cors.DefaultConfig()
+
+	corsConfig.AllowOrigins = []string{"*"}
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	corsConfig.AllowHeaders = []string{
+		"Origin",
+		"Content-Length",
+		"Content-Type",
+		"Authorization",
+	}
+
+	r.Use(gin.Recovery(), gin.Logger(), cors.New(corsConfig))
 
 	// Healthcheck endpoint (публичный)
 	r.GET("/health", func(ctx *gin.Context) {
@@ -73,24 +85,20 @@ func main() {
 	authorized.Use(middleware.AuthRequired(authService)) // Передаём authService для проверки токена
 
 	{
-		// Маршруты для задач (старые, но теперь защищённые)
-		// Обрати внимание: изменились пути с "/api/v1/tasks" на "/tasks"
-		// Если хочешь сохранить "/api/v1", измени здесь и в хендлерах
-		authorized.POST("/tasks", taskHandler.CreateTask)
-		authorized.GET("/tasks", taskHandler.GetTask)
-		authorized.PUT("/tasks", taskHandler.UpdateTask)
-		authorized.DELETE("/tasks", taskHandler.DeleteTask)
-		// Если у тебя есть другие методы в taskHandler, добавь их сюда
-		// authorized.POST("/tasks/move", taskHandler.MoveTask) // Если этот метод есть и он должен быть защищён
-		// authorized.POST("/tasks/dependency", taskHandler.AddTaskDependency)
-		// authorized.DELETE("/tasks/dependency", taskHandler.RemoveTaskDependency)
-		// authorized.GET("/tasks/with-dependencies", taskHandler.GetTaskWithDependencies)
 
-		// Пример другого защищенного маршрута (профиль)
-		authorized.GET("/profile", func(c *gin.Context) {
-			userID, exists := middleware.GetUserIDFromContext(c) // Используем вспомогательную функцию из middleware
+		authorized.POST("/api/v1/tasks", taskHandler.CreateTask)
+		authorized.GET("/api/v1/tasks", taskHandler.GetTask)
+		authorized.PUT("/api/v1/tasks", taskHandler.UpdateTask)
+		authorized.DELETE("/api/v1/tasks", taskHandler.DeleteTask)
+		authorized.POST("/api/v1/tasks/move", taskHandler.MoveTask)
+		authorized.POST("/api/v1/tasks/dependency", taskHandler.AddTaskDependency)
+		authorized.DELETE("/api/v1/tasks/dependency", taskHandler.RemoveTaskDependency)
+		authorized.GET("/api/v1/tasks/with-dependencies", taskHandler.GetTaskWithDependencies)
+
+		authorized.GET("/api/v1/profile", func(c *gin.Context) {
+			userID, exists := middleware.GetUserIDFromContext(c)
 			if !exists {
-				// Это маловероятно, если middleware работает правильно
+
 				log.Println("Main: user_id not found in context after AuthRequired middleware")
 				c.JSON(500, gin.H{"error": "Internal server error"})
 				return
@@ -101,7 +109,6 @@ func main() {
 			})
 		})
 	}
-	// --- Конец настройки маршрутов ---
 
 	// HTTP сервер
 	log.Printf("starting http server on :%s...", cfg.Port)
