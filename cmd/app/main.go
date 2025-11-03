@@ -78,8 +78,6 @@ func main() {
 	// Обновление токена (публичный маршрут, так как использует refresh токен из тела)
 	r.POST("/api/v1/auth/refresh", authHandler.RefreshTokenHandler)
 
-	// --- Защищённые маршруты (требуют аутентификацию через JWT) ---
-	// Создаём группу маршрутов с middleware
 	authorized := r.Group("/api/v1") // Можно использовать и другой префикс, например /api/v1
 	// Применяем middleware ко всей группе
 	authorized.Use(middleware.AuthRequired(authService)) // Передаём authService для проверки токена
