@@ -44,13 +44,15 @@ func main() {
 	r := gin.New()
 	corsConfig := cors.DefaultConfig()
 
-	corsConfig.AllowOrigins = []string{"*"}
+	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{
 		"Origin",
 		"Content-Length",
 		"Content-Type",
 		"Authorization",
+		"Accept",
+		"Access-Control-Allow-Origin",
 	}
 
 	r.Use(gin.Recovery(), gin.Logger(), cors.New(corsConfig))
@@ -80,12 +82,12 @@ func main() {
 
 	authorized := r.Group("/api/v1") // Можно использовать и другой префикс, например /api/v1
 	// Применяем middleware ко всей группе
-	authorized.Use(middleware.AuthRequired(authService)) // Передаём authService для проверки токена
-
+	//authorized.Use(middleware.AuthRequired(authService)) // Передаём authService для проверки токена
 	{
 
 		authorized.POST("/api/v1/tasks", taskHandler.CreateTask)
-		authorized.GET("/api/v1/tasks", taskHandler.GetTask)
+		authorized.GET("/tasks", taskHandler.GetAllTasks)
+		authorized.GET("/tasks/:task_id", taskHandler.GetTaskByID)
 		authorized.PUT("/api/v1/tasks", taskHandler.UpdateTask)
 		authorized.DELETE("/api/v1/tasks", taskHandler.DeleteTask)
 		authorized.POST("/api/v1/tasks/move", taskHandler.MoveTask)

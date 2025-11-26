@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/TrueSmartcomm/backend/internal/models"
@@ -39,15 +40,56 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 }
 
 // GET /tasks
-func (h *TaskHandler) GetTask(c *gin.Context) {
-	idStr := c.Query("id")
-	id := uuid.MustParse(idStr)
+func (h *TaskHandler) GetAllTasks(c *gin.Context) {
+	// Получаем query параметры для фильтрации (если нужно)
+	space := c.Query("space")
+	status := c.Query("status")
 
-	task, err := h.repo.GetTaskByID(context.Background(), id)
+	// Вызываем метод репозитория для получения списка задач
+	tasks, err := h.repo.GetAllTasks(c, space, status)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+		// Логируем ошибку
+		log.Printf("GetAllTasks error: %v", err)
+		// Возвращаем 500 Internal Server Error
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve tasks"})
 		return
 	}
+
+	// Возвращаем список задач с 200 OK
+	c.JSON(http.StatusOK, tasks)
+}
+
+func (h *TaskHandler) GetTaskByID(c *gin.Context) {
+	// Получаем task_id из параметра пути
+	idStr := c.Param("task_id")
+	if idStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "task_id path parameter is required"})
+		return
+	}
+
+	// Парсим строку ID в UUID
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		log.Printf("GetTaskByID error: invalid UUID format (%s): %v", idStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID format"})
+		return
+	}
+
+	// Вызываем метод репозитория для получения задачи по ID
+	task, err := h.repo.GetTaskByID(c, id)
+	if err != nil {
+		// Проверяем, была ли задача не найдена
+		if err.Error() == "task not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+			return
+		}
+		// Другая ошибка БД
+		log.Printf("GetTaskByID error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve task"})
+		return
+	}
+
+	// Возвращаем задачу с 200 OK
 	c.JSON(http.StatusOK, task)
 }
 
